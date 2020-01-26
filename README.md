@@ -1,2 +1,2 @@
-# Machine-Learning-A-Z-R
-Code in R used for the Machine Learning A-Z course.
+# Machine-Learning-A-Z-R 
+R code used for the Machine Learning A-Z course.
