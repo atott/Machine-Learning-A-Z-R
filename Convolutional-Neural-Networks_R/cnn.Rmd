@@ -1,0 +1,77 @@
+---
+title: Puppies or Kittens? Development of a Convolutional Neural Network to Distinguish
+  Between Cats and Dogs Using Keras in R
+author: "Alex Totten"
+date: "May 6, 2018"
+output: rmarkdown::github_document
+---
+
+#Load Keras library
+```{r, warning=FALSE,comment=FALSE, message=FALSE}
+library(keras)
+library(tensorflow)
+```
+
+
+#Flow pictures from the training and test set into the model 
+```{r, warning=FALSE,comment=FALSE, message=FALSE}
+train <- flow_images_from_directory("dataset/training_set",
+                                     generator = image_data_generator(rescale = 1./255,
+                                                                      shear_range = 0.2,
+                                                                      zoom_range = 0.2,
+                                                                      horizontal_flip = TRUE),
+                                     target_size = c(100, 100), 
+                                     class_mode = "binary", 
+                                     batch_size = 32,
+                                     seed = 123)
+
+test <- flow_images_from_directory("dataset/test_set",
+                                    generator = image_data_generator(rescale = 1./255,
+                                                                     shear_range = 0.2,
+                                                                     zoom_range = 0.2,
+                                                                     horizontal_flip = TRUE),
+                                    target_size = c(100, 100), 
+                                    classes = NULL,
+                                    class_mode = "binary", 
+                                    batch_size = 32, 
+                                    seed = 123)
+```
+
+
+#Develop simple model with 3 convolutional layers and poolings 
+```{r, warning=FALSE,comment=FALSE, message=FALSE}
+model <- keras_model_sequential()%>% #Create Sequential Model
+  layer_conv_2d(filter=32,kernel_size=c(3,3), input_shape = c(100, 100, 3), activation = 'relu')%>% #First 2D Convolution
+  layer_max_pooling_2d(pool_size = c(2, 2))%>% #First Pooling
+  layer_dropout(.2)%>% #Drop our to prevent overfitting
+  layer_conv_2d(filter=32,kernel_size=c(3,3), activation = 'relu')%>% #Second Convolution
+  layer_max_pooling_2d(pool_size = c(2, 2))%>% #Second Pooling
+  layer_dropout(.2)%>% #Drop our to prevent overfitting
+  layer_conv_2d(filter=32,kernel_size=c(3,3), activation = 'relu')%>% #Third Convolution
+  layer_max_pooling_2d(pool_size = c(2, 2))%>% #third Pooling
+  layer_dropout(.2)%>% #Drop our to prevent overfitting
+  layer_flatten()%>% #Flatten 
+  layer_dense(units = 128, activation = 'relu')%>% #Full connection 
+  layer_dense(units = 1, activation = 'sigmoid')%>% #Full conneciton
+  compile(optimizer = "adam", loss = "binary_crossentropy", metrics = c('accuracy')) #Complie
+```
+
+
+#Fit the model to train and test pictures
+```{r, warning=FALSE,comment=FALSE, message=FALSE}
+fit_model <- model %>% fit_generator(
+  train,
+  validation_data = test,
+  epochs = 26,
+  steps_per_epoch = 300,
+  workers = 30
+)
+
+```
+
+#Plot the accuracy and loss
+```{r}
+plot(fit_model)
+```
+
+
